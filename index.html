@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>THE FINALS Loadout Randomizer</title>
+    <meta name="description" content="Generate randomized loadouts for THE FINALS Season 11. Supports Light, Medium, and Heavy classes with all weapons and gadgets.">
+    <meta name="keywords" content="the finals, loadout randomizer, the finals season 11, random class generator">
+    <meta name="author" content="DoggoPro">
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #111111;
+            --panel-bg: #1a1a1a;
+            --light-color: #00e5ff;
+            --medium-color: #ffde00;
+            --heavy-color: #ff2a2a;
+            --text-main: #f5f5f5;
+            --text-muted: #888888;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Teko', sans-serif;
+            text-transform: uppercase;
+            box-sizing: border-box;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            overflow-y: auto;
+        }
+
+        .main-wrapper {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .left-panel {
+            flex: 1.4;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            justify-content: flex-start;
+        }
+
+        .right-panel {
+            flex: 0.6;
+            min-width: 280px;
+            max-width: 360px;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            border-top: 4px solid var(--text-muted);
+            padding: 15px;
+            box-sizing: border-box;
+            clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+            height: 100%;
+            min-height: 0;
+            flex-shrink: 0;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .main-logo {
+            max-width: 230px;
+            width: 100%;
+            height: auto;
+            margin: 0 auto;
+            display: block;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.1));
+        }
+
+        .header-subtitles {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+            font-size: 1.15rem;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+        }
+
+        .sub-creator {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .sub-divider {
+            color: var(--text-muted);
+        }
+
+        .sub-season {
+            color: var(--medium-color);
+            font-weight: 600;
+        }
+
+        /* Class Toggles */
+        .class-selection {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .class-btn {
+            flex: 1;
+            background: transparent;
+            border: 2px solid var(--text-muted);
+            color: var(--text-muted);
+            font-family: 'Teko', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 4px 0;
+            transition: all 0.2s ease;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+
+        .class-btn:hover {
+            border-color: var(--text-main);
+            color: var(--text-main);
+        }
+
+        .class-btn.active[data-class="Light"] {
+            background: var(--light-color);
+            border-color: var(--light-color);
+            color: var(--bg-color);
+        }
+
+        .class-btn.active[data-class="Medium"] {
+            background: var(--medium-color);
+            border-color: var(--medium-color);
+            color: var(--bg-color);
+        }
+
+        .class-btn.active[data-class="Heavy"] {
+            background: var(--heavy-color);
+            border-color: var(--heavy-color);
+            color: var(--bg-color);
+        }
+
+        /* Generate Button */
+        .generate-btn {
+            width: 100%;
+            background: var(--text-main);
+            color: var(--bg-color);
+            border: none;
+            font-family: 'Teko', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            padding: 8px;
+            cursor: pointer;
+            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+            transition: background 0.2s ease, color 0.2s ease;
+            margin-bottom: 12px;
+        }
+
+        .generate-btn:hover {
+            background: var(--medium-color);
+        }
+
+        /* Output Area */
+        .output-section-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            padding: 15px;
+            clip-path: polygon(25px 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%, 0 25px);
+            border-top: 5px solid var(--text-muted);
+            display: none;
+            min-height: 0;
+        }
+
+        .output-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .output-class-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1;
+            margin: 0;
+            text-shadow: 2px 2px 0 var(--bg-color);
+        }
+
+        .action-btn {
+            background: transparent;
+            color: var(--text-main);
+            border: 2px solid var(--text-muted);
+            padding: 2px 8px;
+            font-family: 'Teko', sans-serif;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .action-btn:hover {
+            border-color: var(--text-main);
+            background: rgba(255,255,255,0.1);
+        }
+
+        .loadout-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .loadout-item {
+            background: rgba(0,0,0,0.5);
+            padding: 5px;
+            border-left: 4px solid var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 0;
+        }
+
+        .loadout-item.spec { grid-column: span 3; }
+        .loadout-item.weapon { grid-column: span 3; }
+        .loadout-item.gadget { grid-column: span 2; }
+
+        .item-header {
+            font-size: 1rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            position: absolute;
+            top: 4px;
+            left: 8px;
+            pointer-events: none;
+        }
+
+        .item-img-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            margin-top: 10px;
+            min-height: 0;
+        }
+
+        .item-img-container img {
+            max-height: 100%;
+            max-width: 90%;
+            object-fit: contain;
+            filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.9));
+        }
+
+        /* History Section */
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 6px;
+            flex-shrink: 0;
+        }
+        
+        .history-header h3 {
+            margin: 0;
+            font-size: 1.6rem;
+            color: var(--text-main);
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 3px;
+            min-height: 0;
+        }
+
+        .history-list::-webkit-scrollbar { width: 5px; }
+        .history-list::-webkit-scrollbar-track { background: transparent; }
+        .history-list::-webkit-scrollbar-thumb { background: var(--text-muted); }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.4);
+            padding: 6px 10px;
+            cursor: pointer;
+            border-left: 4px solid var(--text-muted);
+            transition: background 0.2s;
+            height: 64px;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        .history-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .hist-info {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .hist-class {
+            font-weight: 700;
+            font-size: 1.1rem;
+            line-height: 1;
+            margin-bottom: 2px;
+        }
+
+        .hist-primary {
+            color: var(--text-main);
+            font-size: 1rem;
+            line-height: 1.1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .hist-gadgets {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .shared-mode-banner {
+            display: none;
+            background: var(--heavy-color);
+            color: white;
+            text-align: center;
+            padding: 6px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .disclaimer {
+            font-size: 0.8rem;
+            color: #555;
+            text-align: center;
+            margin-top: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        @media (max-width: 900px) {
+            body { height: auto; overflow-y: auto; }
+            .main-wrapper { flex-direction: column; height: auto; }
+            .right-panel { width: 100%; max-width: none; height: 350px; flex-shrink: 0; }
+            .loadout-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+            .loadout-item.spec, .loadout-item.weapon, .loadout-item.gadget { grid-column: span 1; height: 130px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-wrapper">
+        <div class="left-panel">
+            <header>
+                <img src="https://cdn2.steamgriddb.com/logo_thumb/3dcf08bb1312cd37914637289ba97421.png" alt="THE FINALS" class="main-logo">
+                <div class="header-subtitles">
+                    <span class="sub-creator">BY DOGGOPRO</span>
+                    <span class="sub-divider">&bull;</span>
+                    <span class="sub-season">UPDATED SEASON 11</span>
+                </div>
+            </header>
+
+            <div class="shared-mode-banner" id="sharedBanner">
+                VIEWING SHARED LOADOUT
+                <button class="action-btn" style="margin-left:15px; border-color:white" onclick="exitSharedMode()">MAKE MY OWN</button>
+            </div>
+
+            <section class="class-selection" id="classSelectors">
+                <button class="class-btn active" data-class="Light">LIGHT</button>
+                <button class="class-btn active" data-class="Medium">MEDIUM</button>
+                <button class="class-btn active" data-class="Heavy">HEAVY</button>
+            </section>
+
+            <button class="generate-btn" id="generateBtn">RANDOMIZE CONTESTANT</button>
+
+            <section class="output-section-container" id="outputSection">
+                <div class="output-header-flex">
+                    <h3 class="output-class-title" id="outClass">MEDIUM BUILD</h3>
+                    <button class="action-btn" id="shareCurrentBtn">SHARE</button>
+                </div>
+                
+                <div class="loadout-grid">
+                    <div class="loadout-item spec" id="boxSpec">
+                        <div class="item-header">SPECIALIZATION</div>
+                        <div class="item-img-container"><img id="imgSpec" src="" alt=""></div>
+                    </div>
+                    
+                    <div class="loadout-item weapon" id="boxWeapon">
+                        <div class="item-header">WEAPON</div>
+                        <div class="item-img-container"><img id="imgWeapon" src="" alt=""></div>
+                    </div>
+                    
+                    <div class="loadout-item gadget" id="boxGadget1">
+                        <div class="item-header">GADGET 1</div>
+                        <div class="item-img-container"><img id="imgGadget1" src="" alt=""></div>
+                    </div>
+                    
+                    <div class="loadout-item gadget" id="boxGadget2">
+                        <div class="item-header">GADGET 2</div>
+                        <div class="item-img-container"><img id="imgGadget2" src="" alt=""></div>
+                    </div>
+                    
+                    <div class="loadout-item gadget" id="boxGadget3">
+                        <div class="item-header">GADGET 3</div>
+                        <div class="item-img-container"><img id="imgGadget3" src="" alt=""></div>
+                    </div>
+                </div>
+            </section>
+            
+            <div class="disclaimer">
+                Fan-made randomizer tool. Not affiliated with Embark Studios or NEXON.
+            </div>
+        </div>
+
+        <div class="right-panel" id="historySection">
+            <div class="history-header">
+                <h3>ROLL HISTORY</h3>
+                <button class="action-btn" onclick="clearHistory()">CLEAR</button>
+            </div>
+            <div class="history-list" id="historyList">
+                <!-- Items populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Database
+        const theFinalsData = {
+            Light: {
+                color: 'var(--light-color)',
+                specializations: ["Cloaking Device", "Evasive Dash", "Grappling Hook"],
+                weapons: ["M11", "V9S", "SR-84", "SH1900", "LH1", "Sword", "Dagger", "Throwing Knives", "93R", "Recurve Bow", "XP-54", "ARN-220", "M26 Matter"],
+                gadgets: ["Breach Charge", "Gateway", "Glitch Grenade", "Sonar Grenade", "Thermal Bore", "Tracking Dart", "Vanishing Bomb", "Gravity Vortex", "Frag Grenade", "Flashbang", "Gas Grenade", "Goo Grenade", "Pyro Grenade", "Smoke Grenade", "H+ Infuser", "Nullifier"]
+            },
+            Medium: {
+                color: 'var(--medium-color)',
+                specializations: ["Healing Beam", "Guardian Turret", "Dematerializer", "Shockwave"],
+                weapons: ["AKM", "FCAR", "R.357", "Model 1887", "Riot Shield", "FAMAS", "Dual Blades", "Chimera-XB", "Pike-556", "CL-40", "Cerberus", "CB-01 Repeater", "P90"],
+                gadgets: ["APS Turret", "Data Reshaper", "Defibrillator", "Explosive Mine", "Gas Mine", "Pyro Mine", "Jump Pad", "Zipline", "Glitch Trap", "Hover Pad", "Frag Grenade", "Flashbang", "Gas Grenade", "Goo Grenade", "Pyro Grenade", "Breach Drill"]
+            },
+            Heavy: {
+                color: 'var(--heavy-color)',
+                specializations: ["Charge 'n' Slam", "Goo Gun", "Mesh Shield", "Winch Claw"],
+                weapons: ["M60", "Lewis Gun", "SA1216", "M32 GL", "Flamethrower", "Sledgehammer", "KS-23", "Spear", ".50 Akimbo", "Shak-50", "BFR Titan", "M134 Minigun"],
+                gadgets: ["Barricade", "C4", "Dome Shield", "RPG-7", "Anti-Gravity Cube", "Motion Sensor", "Explosive Mine", "Pyro Mine", "Frag Grenade", "Flashbang", "Gas Grenade", "Goo Grenade", "Pyro Grenade", "Lockbolt Launcher", "Healing Emitter"]
+            }
+        };
+
+        const baseImgUrl = "https://tiermaker.com/images/media/template_images/2024/111959/the-finals-weapons-gadgets-and-specializations-season-4-111959/";
+        const imgMap = {
+            "AKM": "akmpng.png", "M11": "m11png.png", "FCAR": "fcarpng.png", "XP-54": "xp-54png.png", 
+            "V9S": "v9spng.png", "SH1900": "sh1900png.png", "FAMAS": "famaspng.png", "Model 1887": "model-1887png.png", 
+            "93R": "93rpng.png", "LH1": "lh1png.png", "Pike-556": "pike-556png.png", ".50 Akimbo": "50-akimbopng.png", 
+            "M60": "m60png.png", "Throwing Knives": "throwing-knivespng.png", "SA1216": "sa1216png.png", 
+            "R.357": "r357png.png", "Recurve Bow": "recurve-bowpng.png", "CL-40": "cl-40png.png", 
+            "SR-84": "sr-84png.png", "Flamethrower": "flamethrowerpng.png", "Lewis Gun": "lewis-gunpng.png", 
+            "Defibrillator": "defibpng.png", "Pyro Mine": "pyro-minepng.png", "Gas Mine": "gas-minepng.png", 
+            "Sword": "swordpng.png", "C4": "c4png.png", "RPG-7": "rpgpng.png", "Dome Shield": "dome-shieldpng.png", 
+            "KS-23": "ks-23png.png", "Jump Pad": "jump-padpng.png", "Zipline": "ziplinepng.png", 
+            "Goo Grenade": "goo-grenadepng.png", "Breach Charge": "breach-chargepng.png", "M32 GL": "mgl32png.png", 
+            "Dual Blades": "dual-bladespng.png", "Sonar Grenade": "sonar-grenadepng.png", "Glitch Grenade": "glitch-grenadepng.png", 
+            "Vanishing Bomb": "vanishing-bombpng.png", "Gateway": "gatewaypng.png", "APS Turret": "aps-turrentpng.png", 
+            "Sledgehammer": "sledgehammerpng.png", "Pyro Grenade": "pyro-grenadepng.png", "Thermal Bore": "thermal-borepng.png", 
+            "Motion Sensor": "motion-sensorpng.png", "Frag Grenade": "frag-grenadepng.png", "Explosive Mine": "explosive-minepng.png", 
+            "Dagger": "daggerpng.png", "Barricade": "barricadepng.png", "Glitch Trap": "glitch-trappng.png", 
+            "Anti-Gravity Cube": "anti-gravity-cubepng.png", "Spear": "spearpng.png", "Gas Grenade": "gas-grenadepng.png", 
+            "Riot Shield": "riot-shieldpng.png", "Dematerializer": "dematerializerpng.png", "Flashbang": "flashbangpng.png", 
+            "Healing Beam": "healing-beampng.png", "Tracking Dart": "tracking-dartpng.png", "Evasive Dash": "evasive-dashpng.png", 
+            "Winch Claw": "winch-clawpng.png", "Guardian Turret": "guardian-turrentpng.png", "Smoke Grenade": "smoke-grenadepng.png", 
+            "Data Reshaper": "data-reshaperpng.png", "Goo Gun": "goo-gunpng.png", "Charge 'n' Slam": "charge-n-slampng.png", 
+            "Grappling Hook": "grappling-hookpng.png", "Mesh Shield": "mesh-shieldpng.png", "Cloaking Device": "cloaking-devicepng.png", 
+            "Gravity Vortex": "zzzzz-1738276272gravity-vortexpng.png", "Nullifier": "zzzzz-1750301808nullifierpng.png",
+            "Chimera-XB": "zzzzz-1774588460chimera-xbpng.png", "Shockwave": "zzzzz-1774588460shockwavepng.png", "Hover Pad": "zzzzz-1774588460hover-padpng.png",
+            "ARN-220": "zzzzz-1742708382arn-220png.png", "Shak-50": "zzzzz-1738276272shak-50png.png", "M26 Matter": "m26-matterpng.png",
+            "Cerberus": "zzzzz-1738276272cerberus-12gapng.png", "BFR Titan": "zzzzz-1757601116bfr-titanpng.png", "CB-01 Repeater": "zzzzz-1742708382cb-01-repeaterpng.png",
+            "P90": "zzzzz-1757601116p90png.png", "M134 Minigun": "zzzzz-1742708382m134-minigunpng.png", "H+ Infuser": "zzzzz-1749929411h-infuserpng.png",
+            "Breach Drill": "zzzzz-1749929411breach-drillpng.png", "Healing Emitter": "zzzzz-1749929411healing-emitterpng.png",
+            "Lockbolt Launcher": "zzzzz-1738276272lockbolt-launcherpng.png"
+        };
+
+        const classKeys = ['Light', 'Medium', 'Heavy'];
+        let selectedClasses = [...classKeys];
+        let rollHistory = [];
+        let currentLoadout = null;
+
+        const STORAGE_KEY = "finals_loadout_history";
+
+        // Fisher-Yates shuffle helper
+        function fisherYatesShuffle(array) {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Lightweight array-index share compressor
+        function compressLoadout(loadout) {
+            const classIdx = classKeys.indexOf(loadout.className);
+            const data = theFinalsData[loadout.className];
+            const specIdx = data.specializations.indexOf(loadout.spec);
+            const weaponIdx = data.weapons.indexOf(loadout.weapon);
+            const gadgetIdxs = loadout.gadgets.map(g => data.gadgets.indexOf(g));
+            return [classIdx, specIdx, weaponIdx, gadgetIdxs];
+        }
+
+        function decompressLoadout(arr) {
+            const className = classKeys[arr[0]];
+            const data = theFinalsData[className];
+            const spec = data.specializations[arr[1]];
+            const weapon = data.weapons[arr[2]];
+            const gadgets = arr[3].map(idx => data.gadgets[idx]);
+            return {
+                id: Date.now(),
+                className: className,
+                color: data.color,
+                spec: spec,
+                weapon: weapon,
+                gadgets: gadgets
+            };
+        }
+
+        // LocalStorage operations
+        function saveHistory() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(rollHistory));
+            } catch(e) {
+                console.warn("Could not save history to localStorage", e);
+            }
+        }
+
+        function loadHistory() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const arr = JSON.parse(raw);
+                    if (Array.isArray(arr)) rollHistory = arr;
+                }
+            } catch(e) {
+                console.warn("Could not read history from localStorage", e);
+            }
+            renderHistory();
+        }
+
+        function clearHistory() {
+            rollHistory = [];
+            try {
+                localStorage.removeItem(STORAGE_KEY);
+            } catch(e) {}
+            renderHistory();
+        }
+
+        function applyImage(elementId, itemName) {
+            const imgEl = document.getElementById(elementId);
+            if (imgMap[itemName]) {
+                imgEl.src = baseImgUrl + imgMap[itemName];
+                imgEl.title = itemName;
+                imgEl.alt = itemName;
+                imgEl.style.display = 'block';
+            } else {
+                imgEl.src = '';
+                imgEl.title = itemName;
+                imgEl.alt = itemName;
+                imgEl.style.display = 'none';
+            }
+        }
+
+        function displayLoadout(loadout) {
+            currentLoadout = loadout;
+            
+            const outClassTitle = document.getElementById('outClass');
+            outClassTitle.innerText = `${loadout.className} BUILD`;
+            outClassTitle.style.color = loadout.color;
+            
+            document.getElementById('outputSection').style.borderTopColor = loadout.color;
+
+            applyImage('imgSpec', loadout.spec);
+            applyImage('imgWeapon', loadout.weapon);
+            applyImage('imgGadget1', loadout.gadgets[0]);
+            applyImage('imgGadget2', loadout.gadgets[1]);
+            applyImage('imgGadget3', loadout.gadgets[2]);
+
+            const boxes = ['boxSpec', 'boxWeapon', 'boxGadget1', 'boxGadget2', 'boxGadget3'];
+            boxes.forEach(id => {
+                document.getElementById(id).style.borderLeftColor = loadout.color;
+            });
+
+            document.getElementById('outputSection').style.display = 'flex';
+        }
+
+        // Class toggle setup
+        document.querySelectorAll('.class-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const target = e.target;
+                const className = target.getAttribute('data-class');
+                const index = selectedClasses.indexOf(className);
+
+                if (index > -1) {
+                    if (selectedClasses.length > 1) {
+                        selectedClasses.splice(index, 1);
+                        target.classList.remove('active');
+                    } else {
+                        target.style.borderColor = 'var(--heavy-color)';
+                        setTimeout(() => target.style.borderColor = '', 200);
+                    }
+                } else {
+                    selectedClasses.push(className);
+                    target.classList.add('active');
+                }
+            });
+        });
+
+        // Generate click
+        document.getElementById('generateBtn').addEventListener('click', () => {
+            if (selectedClasses.length === 0) return;
+
+            const chosenClass = selectedClasses[Math.floor(Math.random() * selectedClasses.length)];
+            const data = theFinalsData[chosenClass];
+
+            let spec, weapon, gadgets;
+            let attempts = 0;
+
+            // Roll using unbiased Fisher-Yates and re-roll up to 5 times on immediate sequence matches
+            do {
+                spec = data.specializations[Math.floor(Math.random() * data.specializations.length)];
+                weapon = data.weapons[Math.floor(Math.random() * data.weapons.length)];
+                gadgets = fisherYatesShuffle(data.gadgets).slice(0, 3);
+                attempts++;
+            } while (
+                rollHistory.length > 0 &&
+                rollHistory[0].className === chosenClass &&
+                (rollHistory[0].spec === spec || rollHistory[0].weapon === weapon) &&
+                attempts < 5
+            );
+
+            const loadout = {
+                id: Date.now(),
+                className: chosenClass,
+                color: data.color,
+                spec: spec,
+                weapon: weapon,
+                gadgets: gadgets
+            };
+
+            displayLoadout(loadout);
+
+            rollHistory.unshift(loadout);
+            if (rollHistory.length > 20) rollHistory.pop();
+            saveHistory();
+            renderHistory();
+        });
+
+        function renderHistory() {
+            const listObj = document.getElementById('historyList');
+            listObj.innerHTML = '';
+            
+            if (rollHistory.length === 0) {
+                listObj.innerHTML = '<div style="color:var(--text-muted); padding: 10px;">No history available.</div>';
+                return;
+            }
+
+            rollHistory.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'history-item';
+                el.onclick = () => displayLoadout(item);
+                
+                el.innerHTML = `
+                    <div class="hist-info">
+                        <span class="hist-class" style="color: ${item.color}">${item.className}</span>
+                        <div class="hist-primary" title="${item.weapon} • ${item.spec}">
+                            ${item.weapon} &bull; ${item.spec}
+                        </div>
+                        <div class="hist-gadgets" title="${item.gadgets.join(', ')}">
+                            ${item.gadgets.join(', ')}
+                        </div>
+                    </div>
+                    <button class="action-btn" style="margin-left:8px;" onclick="shareSpecific(event, '${item.id}')">🔗</button>
+                `;
+                listObj.appendChild(el);
+            });
+        }
+
+        function shareSpecific(e, id) {
+            e.stopPropagation();
+            const item = rollHistory.find(h => h.id == id);
+            if(item) executeShare(item);
+        }
+
+        document.getElementById('shareCurrentBtn').addEventListener('click', () => {
+            if (currentLoadout) executeShare(currentLoadout);
+        });
+
+        function executeShare(loadout) {
+            const compressed = compressLoadout(loadout);
+            const encoded = btoa(JSON.stringify(compressed));
+            const url = window.location.href.split('#')[0] + '#share=' + encoded;
+            window.open(url, '_blank');
+        }
+
+        function exitSharedMode() {
+            window.location.hash = '';
+            document.getElementById('sharedBanner').style.display = 'none';
+            document.getElementById('classSelectors').style.display = 'flex';
+            document.getElementById('generateBtn').style.display = 'block';
+            document.getElementById('historySection').style.display = 'flex';
+            document.getElementById('outputSection').style.display = 'none';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.location.hash.startsWith('#share=')) {
+                try {
+                    const encoded = window.location.hash.substring(7);
+                    const compressed = JSON.parse(atob(encoded));
+                    const decoded = decompressLoadout(compressed);
+                    
+                    document.getElementById('sharedBanner').style.display = 'block';
+                    document.getElementById('classSelectors').style.display = 'none';
+                    document.getElementById('generateBtn').style.display = 'none';
+                    document.getElementById('historySection').style.display = 'none';
+                    
+                    displayLoadout(decoded);
+                } catch (e) {
+                    window.location.hash = '';
+                    loadHistory();
+                }
+            } else {
+                loadHistory();
+            }
+        });
+    </script>
+</body>
+</html>
